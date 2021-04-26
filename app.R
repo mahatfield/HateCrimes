@@ -16,7 +16,7 @@ not_joined[colnames(joined)[157:224]] <- NA
 df <- rbind(not_joined,joined)
 
 colleges <- read_csv("CollegeCrimes.csv")
-hcrimes <- read_csv("HateCrimes.csv")
+#hcrimes <- read_csv("HateCrimes.csv")
 
 
 crime_dict <- list("RaceCrimes_" = "Race Crimes: ", 
@@ -232,7 +232,7 @@ server <- function(input, output, session) {
       size = ~CrimeTotal)
     
     fig <- fig %>% colorbar(title = dem_type_dict[[indem]])
-    fig <- fig %>% layout(geo = g)
+    fig <- fig %>% layout(geo = g, autosize = F, width = 1500, height = 1000, margin = m)
     
     fig
     })
