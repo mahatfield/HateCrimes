@@ -71,27 +71,13 @@ getData <- function(state_in, crime_in, year_in, census_in, dem_in) {
   if(state_in == "US") {
     filtered_df <- df %>% 
       select(c(1,2, segregation_var, crime_vars, 153:156))
-    filtered_df$CrimeTotal <- 0
-    for (f in 1:length(filtered_df[,1])) {
-      c_sum = 0
-      for (v in 4:(3+length(crime_vars))) {
-        c_sum = c_sum + filtered_df[f,v]
-      }
-      filtered_df$CrimeTotal[f] <- c_sum
-    }
+    filtered_df$CrimeTotal <- rowSums(filtered_df[,4:(3+length(crime_vars))])
   }
   else {
     filtered_df <- df %>% 
       select(c(1,2, segregation_var, crime_vars, 153:156)) %>%
       filter(State == state_in)
-    filtered_df$CrimeTotal <- 0
-    for (f in 1:length(filtered_df$CrimeTotal)) {
-      c_sum = 0
-      for (v in 4:(3+length(crime_vars))) {
-        c_sum = c_sum + filtered_df[f,v]
-      }
-      filtered_df$CrimeTotal[f] <- c_sum
-    }
+    filtered_df$CrimeTotal <- rowSums(filtered_df[,4:(3+length(crime_vars))])
   }
   colnames(filtered_df)[3] <- "DemStat"
   return(filtered_df)
