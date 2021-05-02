@@ -4,6 +4,7 @@ library(dplyr)
 library(tidyr)
 library(stringr)
 library(plotly)
+library(DT)
 
 joined <- read_csv("JoinedData.csv")
 colnames(joined)[c(77,78)] <- c("usmaplon","usmaplat")
@@ -83,7 +84,40 @@ getData <- function(state_in, crime_in, year_in, census_in, dem_in) {
   return(filtered_df)
 }
 
+getCollegeData <- function(state_in, crime_in, year_in, dis_in) {
+  Crime_Years <- as.character(c(year_in[1]:year_in[2]))
+  crime_vars <- which(colnames(colleges) %in% str_c(crime_in, Crime_Years))
+  
+  if(state_in == "US") {
+    filtered_df <- colleges %>% 
+      select(c(1,2, crime_vars))
+    filtered_df$CrimeTotal <- rowSums(filtered_df[,3:(2+length(crime_vars))])
+  }
+  else {
+    filtered_df <- colleges %>% 
+      select(c(1,2, crime_vars)) %>%
+      filter(St == state_in)
+    filtered_df$CrimeTotal <- rowSums(filtered_df[,3:(2+length(crime_vars))])
+  }
+  if(dis_in == "top") {
+   filtered_df <- filtered_df %>%
+     arrange(desc(CrimeTotal))
+   if(length(filtered_df$CrimeTotal) >= 10) {
+     filtered_df <- filtered_df[c(1:10),]
+   }
+  }
+  else if(dis_in == "bottom") {
+    filtered_df <- filtered_df %>%
+      arrange(CrimeTotal)
+    if(length(filtered_df$CrimeTotal) >= 10) {
+      filtered_df <- filtered_df[c(1:10),]
+    }
+  }
+  return(filtered_df[,c(1,2,length(colnames(filtered_df)))])
+}
+
 test <- getData("WI", "SexCrimes_", c(2000,2005), "09", "BlackPerc")
+testc <- getCollegeData("US", "RaceCrimes_", c(1991,2019), "top")
 
 ui <- fluidPage(
   titlePanel("Hate Crimes and Segregation"),
@@ -165,6 +199,21 @@ ui <- fluidPage(
         textOutput(outputId = "test")
       )
     )
+  ),
+  fluidRow(
+    sidebarLayout(
+      sidebarPanel(
+        h2("Data on College Campuses"),
+        radioButtons("college_display", 
+                     h3("Select to see the colleges with the most hate crimes,
+                        least hate crimes, or all colleges."),
+                     choices = list("Most" = "top", "Least" = "bottom", "All" = "all"),
+                     selected = "top")
+      ),
+      mainPanel(
+        DT::dataTableOutput("CollegeTable")
+      )
+    )
   )
 )
 
@@ -222,6 +271,13 @@ server <- function(input, output, session) {
     
     fig
     })
+  output$CollegeTable = DT::renderDataTable({
+    instate <- as.character(input$State)
+    incrime <- as.character(input$CrimeType)
+    inyear <- c(as.numeric(input$Year[1]),as.numeric(input$Year[2]))
+    incollege <- as.character(input$college_display)
+    getCollegeData(instate, incrime, inyear, incollege)
+  })
   
 }
 
